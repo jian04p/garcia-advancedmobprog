@@ -20,4 +20,14 @@ class ProductService {
         .map(Product.fromJson)
         .toList();
   }
+
+  Future<Product> getById(int productId) async {
+    final response = await http.get(Uri.parse('$host/products/$productId'));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load product (${response.statusCode}).');
+    }
+
+    return Product.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
 }

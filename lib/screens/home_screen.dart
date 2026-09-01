@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'cart_screen.dart';
 import 'product_screen.dart';
 import 'settings_screen.dart';
 
@@ -15,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const _pages = [
     ProductScreen(),
-    _ComingSoonScreen(label: 'Messages'),
+    CartScreen(),
     _ComingSoonScreen(label: 'Profile'),
     SettingsScreen(),
   ];
@@ -23,21 +24,50 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('E-Commerce App'),
-        centerTitle: false,
-      ),
+      appBar: AppBar(title: const Text('E-Commerce App'), centerTitle: false),
       body: IndexedStack(index: _selectedIndex, children: _pages),
+      // Lab Activity 3 Enhancement 2: chat moved from the bottom bar to this FAB.
+      floatingActionButton: _selectedIndex == 1
+          ? null
+          : FloatingActionButton(
+              tooltip: 'Chat',
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const _ChatScreen())),
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (value) => setState(() => _selectedIndex = value),
+        onDestinationSelected: (value) =>
+            setState(() => _selectedIndex = value),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Shop'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            label: 'Cart',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            label: 'Settings',
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _ChatScreen extends StatelessWidget {
+  const _ChatScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Messages')),
+      body: const Center(child: Text('Messages screen')),
     );
   }
 }

@@ -27,3 +27,20 @@ This activity applies a layered design pattern: models represent data,
 services retrieve it, providers hold shared app state, and screens/widgets
 render and interact with the user interface. Separating these responsibilities
 makes the app easier to test, maintain, and extend.
+
+## Lab Activity 3: Discussion
+
+`CartService` calls the DummyJSON cart API and maps its response to the
+`Cart` and `CartProduct` models. The cart screen requests the cart for one
+user ID and renders that cart's products, quantities, and totals. Selecting a
+cart item opens the same `ProductDetailsScreen`; that screen uses
+`ProductService.getById` to retrieve the complete product data for the chosen
+product ID.
+
+The layered design pattern is extended with a cart model and service while the
+screens remain responsible for presentation and navigation. `getByUserId`
+uses `/carts/user/{userId}` and takes the first returned cart so that only one
+user's cart is displayed. `getById` is also available in `CartService` for the
+single-cart `/carts/{id}` endpoint. The detail screen posts a product ID and
+quantity to `/carts/add`; DummyJSON simulates this request and returns the
+created cart response without persisting it.
