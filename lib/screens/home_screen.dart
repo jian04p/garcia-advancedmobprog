@@ -24,7 +24,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('E-Commerce App'), centerTitle: false),
+      appBar: AppBar(
+        title: Text(_selectedIndex == 1 ? 'Cart' : 'E-Commerce App'),
+        centerTitle: false,
+        actions: _selectedIndex == 1
+            ? [
+                IconButton(
+                  tooltip: 'Settings',
+                  onPressed: () => setState(() => _selectedIndex = 3),
+                  icon: const Icon(Icons.settings_outlined),
+                ),
+              ]
+            : null,
+      ),
       body: IndexedStack(index: _selectedIndex, children: _pages),
       // Lab Activity 3 Enhancement 2: chat moved from the bottom bar to this FAB.
       floatingActionButton: _selectedIndex == 1
