@@ -4,8 +4,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import 'models/user.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/signin_screen.dart';
+import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +35,26 @@ class GarciaAdvMobProg extends StatelessWidget {
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
             themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
-            home: const HomeScreen(),
+            home: const SplashScreen(),
+            onGenerateRoute: (settings) {
+              switch (settings.name) {
+                case '/signin':
+                  return MaterialPageRoute<void>(
+                    builder: (_) => const SignInScreen(),
+                  );
+                case '/home':
+                  final user = settings.arguments as User?;
+                  if (user == null) {
+                    return MaterialPageRoute<void>(
+                      builder: (_) => const SignInScreen(),
+                    );
+                  }
+                  return MaterialPageRoute<void>(
+                    builder: (_) => HomeScreen(user: user),
+                  );
+              }
+              return null;
+            },
           );
         },
       ),

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../constants.dart';
 import '../models/cart.dart';
 import '../services/cart_service.dart';
 import 'detail_screen.dart';
 import 'product_screen.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  const CartScreen({super.key, required this.userId});
+
+  final int userId;
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -24,7 +25,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _loadCart() {
-    _cartFuture = CartService().getByUserId(cartUserId);
+    // Enhancement 3: the cart uses the authenticated user's saved ID.
+    _cartFuture = CartService().getByUserId(widget.userId);
   }
 
   Future<void> _reload() async {
@@ -132,6 +134,7 @@ class _CartScreenState extends State<CartScreen> {
                         ...products.map(
                           (product) => _CartProductTile(
                             product: product,
+                            userId: widget.userId,
                             quantity: _quantityFor(product),
                             onAdd: () => _changeQuantity(product, 1),
                             onRemove: () => _changeQuantity(product, -1),
@@ -141,7 +144,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
               ),
-              // Enhancement 3: this screen renders the single cart for cartUserId.
+              // Enhancement 3: this screen renders the signed-in user's cart.
               _CartSummary(
                 subtotal: subtotal,
                 discountedTotal: discountedTotal,
@@ -163,12 +166,14 @@ class _CartScreenState extends State<CartScreen> {
 class _CartProductTile extends StatelessWidget {
   const _CartProductTile({
     required this.product,
+    required this.userId,
     required this.quantity,
     required this.onAdd,
     required this.onRemove,
   });
 
   final CartProduct product;
+  final int userId;
   final int quantity;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
@@ -180,10 +185,11 @@ class _CartProductTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        // Enhancement 1: cart products navigate to the shared detail screen.
+        // Lab Activity 3 enhancement: cart products open the detail screen.
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ProductDetailsScreen(productId: product.id),
+            builder: (_) =>
+                ProductDetailsScreen(productId: product.id, userId: userId),
           ),
         ),
         child: Padding(

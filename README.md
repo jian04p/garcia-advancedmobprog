@@ -44,3 +44,19 @@ user's cart is displayed. `getById` is also available in `CartService` for the
 single-cart `/carts/{id}` endpoint. The detail screen posts a product ID and
 quantity to `/carts/add`; DummyJSON simulates this request and returns the
 created cart response without persisting it.
+
+## Lab Activity 4: Discussion
+
+`UserService` authenticates through DummyJSON, converts the response into the
+`User` model, and persists the user fields and access token with
+`SharedPreferences`. `SplashScreen` restores that saved session on launch and
+routes either to sign-in or to the authenticated home screen. `ProfileScreen`
+then renders the stored model data without placing HTTP or storage code in the
+UI.
+
+This extends the layered design pattern with authentication and persistence:
+models describe user data, services handle the API and local storage, and
+screens present the result. The authenticated `User.id` is passed to both the
+cart and detail screens, so `CartService.getByUserId` requests that user's
+single cart and `/carts/add` uses the same user ID. Logging out clears the
+saved session, returning the next launch to sign-in.

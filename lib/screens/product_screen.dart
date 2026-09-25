@@ -6,7 +6,9 @@ import '../widgets/custom_text.dart';
 import 'detail_screen.dart';
 
 class ProductScreen extends StatefulWidget {
-  const ProductScreen({super.key});
+  const ProductScreen({super.key, required this.userId});
+
+  final int userId;
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -75,8 +77,10 @@ class _ProductScreenState extends State<ProductScreen> {
                             crossAxisSpacing: 12,
                             childAspectRatio: .62,
                           ),
-                      itemBuilder: (context, index) =>
-                          ProductCard(product: filteredProducts[index]),
+                      itemBuilder: (context, index) => ProductCard(
+                        product: filteredProducts[index],
+                        userId: widget.userId,
+                      ),
                     ),
             ),
           ],
@@ -87,9 +91,10 @@ class _ProductScreenState extends State<ProductScreen> {
 }
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key, required this.product});
+  const ProductCard({super.key, required this.product, required this.userId});
 
   final Product product;
+  final int userId;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +104,8 @@ class ProductCard extends StatelessWidget {
         // Lab Activity 2 enhancement: opens the product details page.
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ProductDetailsScreen(product: product),
+            builder: (_) =>
+                ProductDetailsScreen(product: product, userId: userId),
           ),
         ),
         child: Column(

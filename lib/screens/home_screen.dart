@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../models/user.dart';
+import '../services/user_service.dart';
 import 'cart_screen.dart';
+import 'profile_screen.dart';
 import 'product_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.user});
+
+  final User user;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -13,19 +18,36 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  late final List<Widget> _pages;
 
-  static const _pages = [
-    ProductScreen(),
-    CartScreen(),
-    _ComingSoonScreen(label: 'Profile'),
-    SettingsScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      ProductScreen(userId: widget.user.id),
+      CartScreen(userId: widget.user.id),
+      ProfileScreen(user: widget.user, onLogout: _logout),
+      const SettingsScreen(),
+    ];
+  }
+
+  Future<void> _logout() async {
+    await UserService().logout();
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/signin', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedIndex == 1 ? 'Cart' : 'E-Commerce App'),
+        title: Text(
+          _selectedIndex == 1
+              ? 'Cart'
+              : _selectedIndex == 2
+              ? widget.user.firstName
+              : 'E-Commerce App',
+        ),
         centerTitle: false,
         actions: _selectedIndex == 1
             ? [
@@ -38,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : null,
       ),
       body: IndexedStack(index: _selectedIndex, children: _pages),
-      // Enhancement 2: chat is a FAB and is hidden while the cart is selected.
+      // Lab Activity 3 enhancement: chat is hidden while the cart is selected.
       floatingActionButton: _selectedIndex == 1
           ? null
           : FloatingActionButton(
@@ -81,16 +103,5 @@ class _ChatScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Messages')),
       body: const Center(child: Text('Messages screen')),
     );
-  }
-}
-
-class _ComingSoonScreen extends StatelessWidget {
-  const _ComingSoonScreen({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('$label screen'));
   }
 }

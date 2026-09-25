@@ -18,7 +18,9 @@ class SettingsScreen extends StatelessWidget {
           child: SwitchListTile(
             // Lab Activity 2 enhancement: theme control lives in Settings.
             title: const Text('Dark mode'),
-            subtitle: const Text('Use the dark color theme throughout the app.'),
+            subtitle: const Text(
+              'Use the dark color theme throughout the app.',
+            ),
             secondary: Icon(
               themeProvider.isDark ? Icons.dark_mode : Icons.light_mode,
             ),

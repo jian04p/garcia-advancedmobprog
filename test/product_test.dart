@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:garcia_advmobprog/models/cart.dart';
 import 'package:garcia_advmobprog/models/product.dart';
+import 'package:garcia_advmobprog/models/user.dart';
+import 'package:garcia_advmobprog/services/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('Product parses a DummyJSON response', () {
@@ -49,5 +52,46 @@ void main() {
     expect(cart.products.single.quantity, 4);
     expect(cart.toJson()['userId'], 5);
     expect(cart.toJson()['products'], isA<List<dynamic>>());
+  });
+
+  test('User stores the authentication response shape', () {
+    final user = User.fromJson({
+      'id': 1,
+      'username': 'emilys',
+      'email': 'emily.johnson@x.dummyjson.com',
+      'firstName': 'Emily',
+      'lastName': 'Johnson',
+      'gender': 'female',
+      'image': 'https://example.com/emily.png',
+      'accessToken': 'access-token',
+      'refreshToken': 'refresh-token',
+    });
+
+    expect(user.fullName, 'Emily Johnson');
+    expect(user.id, 1);
+    expect(user.toJson()['accessToken'], 'access-token');
+  });
+
+  test('UserService restores and clears a saved session', () async {
+    SharedPreferences.setMockInitialValues({});
+    final service = UserService();
+    const user = User(
+      id: 1,
+      username: 'emilys',
+      email: 'emily.johnson@x.dummyjson.com',
+      firstName: 'Emily',
+      lastName: 'Johnson',
+      gender: 'female',
+      image: 'https://example.com/emily.png',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    );
+
+    await service.saveUserData(user);
+    expect(await service.isLoggedIn(), isTrue);
+    expect((await service.getSavedUser())?.id, 1);
+
+    await service.logout();
+    expect(await service.getSavedUser(), isNull);
   });
 }

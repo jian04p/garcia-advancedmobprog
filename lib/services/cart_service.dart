@@ -19,7 +19,7 @@ class CartService {
     return carts.whereType<Map<String, dynamic>>().map(Cart.fromJson).toList();
   }
 
-  /// Enhancement 3: renders only the first cart returned for one user ID.
+  /// Lab Activity 3 enhancement: renders one cart returned for a user ID.
   Future<Cart?> getByUserId(int userId) async {
     final response = await http.get(Uri.parse('$host/carts/user/$userId'));
 
@@ -43,7 +43,7 @@ class CartService {
     return Cart.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
-  /// Enhancement 3: posts a product ID and quantity to DummyJSON's cart API.
+  /// Lab Activity 3 enhancement: posts a product and quantity to the cart API.
   Future<Cart> addToCart({
     required int userId,
     required int productId,

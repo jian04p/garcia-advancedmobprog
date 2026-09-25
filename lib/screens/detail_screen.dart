@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 
-import '../constants.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
 import '../services/product_service.dart';
 import 'product_screen.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
-  const ProductDetailsScreen({super.key, this.product, this.productId})
-    : assert(product != null || productId != null);
+  const ProductDetailsScreen({
+    super.key,
+    this.product,
+    this.productId,
+    required this.userId,
+  }) : assert(product != null || productId != null);
 
   final Product? product;
   final int? productId;
+  final int userId;
 
   @override
   Widget build(BuildContext context) {
     if (product != null) {
-      return _ProductDetailsBody(product: product!);
+      return _ProductDetailsBody(product: product!, userId: userId);
     }
 
     return Scaffold(
@@ -35,7 +39,7 @@ class ProductDetailsScreen extends StatelessWidget {
               ),
             );
           }
-          return _ProductDetailsBody(product: snapshot.data!);
+          return _ProductDetailsBody(product: snapshot.data!, userId: userId);
         },
       ),
     );
@@ -43,15 +47,16 @@ class ProductDetailsScreen extends StatelessWidget {
 }
 
 class _ProductDetailsBody extends StatelessWidget {
-  const _ProductDetailsBody({required this.product});
+  const _ProductDetailsBody({required this.product, required this.userId});
 
   final Product product;
+  final int userId;
 
   Future<void> _addToCart(BuildContext context) async {
     try {
-      // Enhancement 3: submit this product and its quantity to /carts/add.
+      // Enhancement 3: submit the authenticated user's product to /carts/add.
       final cart = await CartService().addToCart(
-        userId: cartUserId,
+        userId: userId,
         productId: product.id,
       );
       if (!context.mounted) return;
