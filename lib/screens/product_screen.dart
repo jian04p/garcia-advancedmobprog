@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 import '../widgets/custom_text.dart';
-import 'product_details_screen.dart';
+import 'detail_screen.dart';
 
 class ProductScreen extends StatefulWidget {
   const ProductScreen({super.key});
@@ -48,7 +48,7 @@ class _ProductScreenState extends State<ProductScreen> {
 
         return Column(
           children: [
-            // Enhancement 1: This search field filters the product list.
+            // Lab Activity 2 enhancement: this search field filters products.
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: TextField(
@@ -75,9 +75,8 @@ class _ProductScreenState extends State<ProductScreen> {
                             crossAxisSpacing: 12,
                             childAspectRatio: .62,
                           ),
-                      itemBuilder: (context, index) => ProductCard(
-                        product: filteredProducts[index],
-                      ),
+                      itemBuilder: (context, index) =>
+                          ProductCard(product: filteredProducts[index]),
                     ),
             ),
           ],
@@ -97,7 +96,7 @@ class ProductCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        // Enhancement 2: Tapping a card opens a dedicated product details page.
+        // Lab Activity 2 enhancement: opens the product details page.
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ProductDetailsScreen(product: product),
@@ -132,7 +131,11 @@ class ProductCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 17),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 17,
+                      ),
                       const SizedBox(width: 3),
                       Text(product.rating.toStringAsFixed(1)),
                     ],

@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : null,
       ),
       body: IndexedStack(index: _selectedIndex, children: _pages),
-      // Lab Activity 3 Enhancement 2: chat moved from the bottom bar to this FAB.
+      // Enhancement 2: chat is a FAB and is hidden while the cart is selected.
       floatingActionButton: _selectedIndex == 1
           ? null
           : FloatingActionButton(

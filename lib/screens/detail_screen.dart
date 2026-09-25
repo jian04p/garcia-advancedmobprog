@@ -49,7 +49,7 @@ class _ProductDetailsBody extends StatelessWidget {
 
   Future<void> _addToCart(BuildContext context) async {
     try {
-      // Lab Activity 3: submit the selected product id and quantity to /carts/add.
+      // Enhancement 3: submit this product and its quantity to /carts/add.
       final cart = await CartService().addToCart(
         userId: cartUserId,
         productId: product.id,

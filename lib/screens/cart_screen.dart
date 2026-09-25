@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../models/cart.dart';
 import '../services/cart_service.dart';
-import 'product_details_screen.dart';
+import 'detail_screen.dart';
 import 'product_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -141,7 +141,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
               ),
-              // Lab Activity 3 Enhancement 3: live totals respond to +/- controls.
+              // Enhancement 3: this screen renders the single cart for cartUserId.
               _CartSummary(
                 subtotal: subtotal,
                 discountedTotal: discountedTotal,
@@ -180,7 +180,7 @@ class _CartProductTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        // Lab Activity 3 Enhancement 1: reuse the existing product details screen.
+        // Enhancement 1: cart products navigate to the shared detail screen.
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ProductDetailsScreen(productId: product.id),

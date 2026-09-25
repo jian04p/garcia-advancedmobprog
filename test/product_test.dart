@@ -47,5 +47,7 @@ void main() {
     expect(cart.userId, 5);
     expect(cart.products.single.id, 144);
     expect(cart.products.single.quantity, 4);
+    expect(cart.toJson()['userId'], 5);
+    expect(cart.toJson()['products'], isA<List<dynamic>>());
   });
 }

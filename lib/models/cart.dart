@@ -31,6 +31,18 @@ class Cart {
       totalQuantity: (json['totalQuantity'] as num? ?? 0).toInt(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'products': products.map((product) => product.toJson()).toList(),
+      'total': total,
+      'discountedTotal': discountedTotal,
+      'userId': userId,
+      'totalProducts': totalProducts,
+      'totalQuantity': totalQuantity,
+    };
+  }
 }
 
 class CartProduct {
@@ -67,5 +79,18 @@ class CartProduct {
               .toDouble(),
       thumbnail: json['thumbnail'] as String? ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'price': price,
+      'quantity': quantity,
+      'total': total,
+      'discountPercentage': discountPercentage,
+      'discountedTotal': discountedTotal,
+      'thumbnail': thumbnail,
+    };
   }
 }

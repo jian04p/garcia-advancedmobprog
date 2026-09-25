@@ -6,7 +6,20 @@ import '../constants.dart';
 import '../models/cart.dart';
 
 class CartService {
-  /// Returns the first cart for the specified user, so the UI renders one cart.
+  /// Replicates the handout's base cart endpoint for callers that need all carts.
+  Future<List<Cart>> getAllCarts() async {
+    final response = await http.get(Uri.parse('$host/carts'));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load carts (${response.statusCode}).');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final carts = data['carts'] as List<dynamic>? ?? const [];
+    return carts.whereType<Map<String, dynamic>>().map(Cart.fromJson).toList();
+  }
+
+  /// Enhancement 3: renders only the first cart returned for one user ID.
   Future<Cart?> getByUserId(int userId) async {
     final response = await http.get(Uri.parse('$host/carts/user/$userId'));
 
@@ -30,6 +43,7 @@ class CartService {
     return Cart.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
+  /// Enhancement 3: posts a product ID and quantity to DummyJSON's cart API.
   Future<Cart> addToCart({
     required int userId,
     required int productId,

@@ -16,7 +16,7 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Card(
           child: SwitchListTile(
-            // Enhancement 3: Theme control is moved to the settings screen.
+            // Lab Activity 2 enhancement: theme control lives in Settings.
             title: const Text('Dark mode'),
             subtitle: const Text('Use the dark color theme throughout the app.'),
             secondary: Icon(
