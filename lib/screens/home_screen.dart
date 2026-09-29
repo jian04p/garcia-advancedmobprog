@@ -26,8 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       ProductScreen(userId: widget.user.id),
       CartScreen(userId: widget.user.id),
-      ProfileScreen(user: widget.user, onLogout: _logout),
-      const SettingsScreen(),
+      const ProfileScreen(),
+      SettingsScreen(onLogout: _logout),
     ];
   }
 
@@ -45,7 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _selectedIndex == 1
               ? 'Cart'
               : _selectedIndex == 2
-              ? widget.user.firstName
+              ? (widget.user.firstName.isEmpty
+                    ? 'Profile'
+                    : widget.user.firstName)
               : 'E-Commerce App',
         ),
         centerTitle: false,

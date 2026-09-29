@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,17 +9,84 @@ import '../constants.dart';
 import '../models/user.dart';
 
 class UserService {
-  static const _idKey = 'id';
-  static const _usernameKey = 'username';
-  static const _emailKey = 'email';
-  static const _firstNameKey = 'firstName';
-  static const _lastNameKey = 'lastName';
-  static const _genderKey = 'gender';
-  static const _imageKey = 'image';
-  static const _accessTokenKey = 'accessToken';
-  static const _refreshTokenKey = 'refreshToken';
+  static const _profileKey = 'saved_user_profile';
+  firebase_auth.FirebaseAuth get _firebaseAuth =>
+      firebase_auth.FirebaseAuth.instance;
 
-  /// Enhancement 2: authenticates with DummyJSON and persists the response.
+  firebase_auth.User? get currentUser =>
+      Firebase.apps.isEmpty ? null : _firebaseAuth.currentUser;
+
+  Stream<firebase_auth.User?> get authStateChanges => Firebase.apps.isEmpty
+      ? const Stream<firebase_auth.User?>.empty()
+      : _firebaseAuth.authStateChanges();
+
+  /// Lab 5 Enhancement 1: Firebase email/password sign-in.
+  Future<firebase_auth.UserCredential> signIn({
+    required String email,
+    required String password,
+  }) {
+    _requireFirebase();
+    return _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// Lab 5 Enhancement 1: creates an account through Firebase Auth.
+  Future<firebase_auth.UserCredential> createAccount({
+    required String email,
+    required String password,
+  }) {
+    _requireFirebase();
+    return _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// Lab 5 Enhancement 1: updates the Firebase display name and saved profile.
+  Future<void> updateUsername({required String username}) async {
+    _requireFirebase();
+    final firebaseUser = _requireCurrentFirebaseUser();
+    await firebaseUser.updateDisplayName(username);
+    await firebaseUser.reload();
+    final user = await getUserData();
+    if (user != null) await saveUserData(user.copyWith(username: username));
+  }
+
+  /// Lab 5 Enhancement 1: reauthenticates, deletes the account, then signs out.
+  Future<void> deleteAccount({
+    required String email,
+    required String password,
+  }) async {
+    _requireFirebase();
+    final firebaseUser = _requireCurrentFirebaseUser();
+    final credential = firebase_auth.EmailAuthProvider.credential(
+      email: email,
+      password: password,
+    );
+    await firebaseUser.reauthenticateWithCredential(credential);
+    await firebaseUser.delete();
+    await _clearSavedUser();
+  }
+
+  /// Lab 5 Enhancement 1: reauthenticates before changing the password.
+  Future<void> resetPasswordFromCurrentPassword({
+    required String currentPassword,
+    required String newPassword,
+    required String email,
+  }) async {
+    _requireFirebase();
+    final firebaseUser = _requireCurrentFirebaseUser();
+    final credential = firebase_auth.EmailAuthProvider.credential(
+      email: email,
+      password: currentPassword,
+    );
+    await firebaseUser.reauthenticateWithCredential(credential);
+    await firebaseUser.updatePassword(newPassword);
+  }
+
+  /// Preserves the Lab 4 DummyJSON path for the required login-type comparison.
   Future<User> loginUser(String username, String password) async {
     final response = await http.post(
       Uri.parse('$host/auth/login'),
@@ -35,7 +104,7 @@ class UserService {
 
     final user = User.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
-    );
+    ).copyWith(loginType: LoginType.dummyJson);
     if (user.id == 0 || user.accessToken.isEmpty) {
       throw Exception('The login response did not include a valid user.');
     }
@@ -43,46 +112,81 @@ class UserService {
     return user;
   }
 
-  /// Stores only the fields needed to restore the signed-in user next launch.
   Future<void> saveUserData(User user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_idKey, user.id);
-    await prefs.setString(_usernameKey, user.username);
-    await prefs.setString(_emailKey, user.email);
-    await prefs.setString(_firstNameKey, user.firstName);
-    await prefs.setString(_lastNameKey, user.lastName);
-    await prefs.setString(_genderKey, user.gender);
-    await prefs.setString(_imageKey, user.image);
-    await prefs.setString(_accessTokenKey, user.accessToken);
-    await prefs.setString(_refreshTokenKey, user.refreshToken);
+    await prefs.setString(_profileKey, jsonEncode(user.toJson()));
   }
 
-  Future<Map<String, dynamic>> getUserData() async {
+  /// Lab 5 Enhancement 3: exposes the current DummyJSON or Firebase profile.
+  Future<User?> getUserData() async {
+    final storedUser = await _getStoredUser();
+    if (Firebase.apps.isNotEmpty && _firebaseAuth.currentUser != null) {
+      final firebaseUser = _firebaseAuth.currentUser!;
+      final hasMatchingSavedProfile =
+          storedUser?.loginType == LoginType.firebase &&
+          storedUser?.firebaseUid == firebaseUser.uid;
+      final profile = hasMatchingSavedProfile
+          ? storedUser!
+          : User(
+              id: 0,
+              username: firebaseUser.displayName ?? '',
+              email: firebaseUser.email ?? '',
+              firstName: '',
+              lastName: '',
+              gender: '',
+              image: firebaseUser.photoURL ?? '',
+              accessToken: '',
+              refreshToken: '',
+              loginType: LoginType.firebase,
+              firebaseUid: firebaseUser.uid,
+            );
+      return profile.copyWith(
+        username: firebaseUser.displayName ?? profile.username,
+        email: firebaseUser.email ?? profile.email,
+        firebaseUid: firebaseUser.uid,
+        loginType: LoginType.firebase,
+      );
+    }
+    return storedUser?.loginType == LoginType.dummyJson ? storedUser : null;
+  }
+
+  Future<User?> getSavedUser() => getUserData();
+
+  Future<bool> isLoggedIn() async => await getUserData() != null;
+
+  /// Lab 5 Enhancement 1: clears the Firebase/local session for logout.
+  Future<void> signOut() async {
+    if (Firebase.apps.isNotEmpty && _firebaseAuth.currentUser != null) {
+      await _firebaseAuth.signOut();
+    }
+    await _clearSavedUser();
+  }
+
+  Future<void> logout() => signOut();
+
+  Future<User?> _getStoredUser() async {
     final prefs = await SharedPreferences.getInstance();
-    return {
-      'id': prefs.getInt(_idKey) ?? 0,
-      'username': prefs.getString(_usernameKey) ?? '',
-      'email': prefs.getString(_emailKey) ?? '',
-      'firstName': prefs.getString(_firstNameKey) ?? '',
-      'lastName': prefs.getString(_lastNameKey) ?? '',
-      'gender': prefs.getString(_genderKey) ?? '',
-      'image': prefs.getString(_imageKey) ?? '',
-      'accessToken': prefs.getString(_accessTokenKey) ?? '',
-      'refreshToken': prefs.getString(_refreshTokenKey) ?? '',
-    };
+    final encodedUser = prefs.getString(_profileKey);
+    if (encodedUser == null || encodedUser.isEmpty) return null;
+    return User.fromJson(jsonDecode(encodedUser) as Map<String, dynamic>);
   }
 
-  /// Enhancement 1: restores the persisted session during the splash screen.
-  Future<User?> getSavedUser() async {
-    final data = await getUserData();
-    final user = User.fromJson(data);
-    return user.id > 0 && user.accessToken.isNotEmpty ? user : null;
-  }
-
-  Future<bool> isLoggedIn() async => await getSavedUser() != null;
-
-  Future<void> logout() async {
+  Future<void> _clearSavedUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove(_profileKey);
+  }
+
+  void _requireFirebase() {
+    if (Firebase.apps.isEmpty) {
+      throw StateError('Firebase is not initialized.');
+    }
+  }
+
+  firebase_auth.User _requireCurrentFirebaseUser() {
+    final firebaseUser = _firebaseAuth.currentUser;
+    if (firebaseUser == null) {
+      throw StateError('No Firebase user is signed in.');
+    }
+    return firebaseUser;
   }
 }

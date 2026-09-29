@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, required this.onLogout});
+
+  final Future<void> Function() onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,18 @@ class SettingsScreen extends StatelessWidget {
             value: themeProvider.isDark,
             onChanged: themeProvider.toggleTheme,
           ),
+        ),
+        const SizedBox(height: 20),
+        // Enhancement 3: logout is available in Settings and returns to login.
+        FilledButton.icon(
+          onPressed: () async => onLogout(),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+            minimumSize: const Size.fromHeight(52),
+          ),
+          icon: const Icon(Icons.logout),
+          label: const Text('Log out'),
         ),
       ],
     );

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../models/user.dart';
 import '../services/user_service.dart';
+import 'signup_screen.dart';
+
+enum _LoginMode { firebase, dummyJson }
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -13,30 +17,66 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(text: 'emilys');
-  final _passwordController = TextEditingController(text: 'emilyspass');
+  final _identifierController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _userService = UserService();
+  _LoginMode _mode = _LoginMode.firebase;
   bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _setMode(_LoginMode mode) {
+    if (_mode == mode) return;
+    setState(() {
+      _mode = mode;
+      _identifierController.text = mode == _LoginMode.dummyJson ? 'emilys' : '';
+      _passwordController.text = mode == _LoginMode.dummyJson
+          ? 'emilyspass'
+          : '';
+    });
   }
 
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isLoading = true);
-
     try {
-      final user = await _userService.loginUser(
-        _usernameController.text.trim(),
-        _passwordController.text,
-      );
+      final User user;
+      if (_mode == _LoginMode.firebase) {
+        final credential = await _userService.signIn(
+          email: _identifierController.text.trim(),
+          password: _passwordController.text,
+        );
+        final firebaseUser = credential.user!;
+        user =
+            (await _userService.getUserData()) ??
+            User(
+              id: 0,
+              username: firebaseUser.displayName ?? '',
+              email: firebaseUser.email ?? '',
+              firstName: '',
+              lastName: '',
+              gender: '',
+              image: firebaseUser.photoURL ?? '',
+              accessToken: '',
+              refreshToken: '',
+              loginType: LoginType.firebase,
+              firebaseUid: firebaseUser.uid,
+            );
+        await _userService.saveUserData(user);
+      } else {
+        user = await _userService.loginUser(
+          _identifierController.text.trim(),
+          _passwordController.text,
+        );
+      }
       if (!mounted) return;
-      // Enhancement 2: sign-in delegates authentication to UserService.
+      // Lab 5 Enhancement 2: Firebase and DummyJSON use separate login paths.
       Navigator.of(context).pushReplacementNamed('/home', arguments: user);
     } catch (error) {
       if (!mounted) return;
@@ -51,6 +91,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final isFirebase = _mode == _LoginMode.firebase;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -67,7 +108,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       radius: 38,
                       backgroundColor: colors.primaryContainer,
                       foregroundColor: colors.onPrimaryContainer,
-                      child: const Icon(Icons.storefront_rounded, size: 40),
+                      child: const Icon(Icons.lock_person_rounded, size: 40),
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -75,25 +116,49 @@ class _SignInScreenState extends State<SignInScreen> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Sign in to continue shopping.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                    const SizedBox(height: 20),
+                    // Enhancement 2: makes the DummyJSON and Firebase flows visible.
+                    SegmentedButton<_LoginMode>(
+                      segments: const [
+                        ButtonSegment(
+                          value: _LoginMode.firebase,
+                          icon: Icon(Icons.cloud_outlined),
+                          label: Text('Firebase'),
+                        ),
+                        ButtonSegment(
+                          value: _LoginMode.dummyJson,
+                          icon: Icon(Icons.api_outlined),
+                          label: Text('DummyJSON'),
+                        ),
+                      ],
+                      selected: {_mode},
+                      onSelectionChanged: (selection) =>
+                          _setMode(selection.single),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     TextFormField(
-                      controller: _usernameController,
+                      controller: _identifierController,
+                      keyboardType: isFirebase
+                          ? TextInputType.emailAddress
+                          : TextInputType.text,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.person_outline),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: isFirebase ? 'Email address' : 'Username',
+                        prefixIcon: const Icon(Icons.person_outline),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Enter your username.'
-                          : null,
+                      validator: (value) {
+                        final identifier = value?.trim() ?? '';
+                        if (identifier.isEmpty) {
+                          return isFirebase
+                              ? 'Enter your email address.'
+                              : 'Enter your username.';
+                        }
+                        if (isFirebase && !identifier.contains('@')) {
+                          return 'Enter a valid email address.';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -118,8 +183,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                         border: const OutlineInputBorder(),
                       ),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Enter your password.'
+                      validator: (value) => value == null || value.length < 6
+                          ? 'Use at least 6 characters.'
                           : null,
                     ),
                     const SizedBox(height: 24),
@@ -136,12 +201,24 @@ class _SignInScreenState extends State<SignInScreen> {
                             )
                           : const Text('Log in'),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Demo credentials: emilys / emilyspass',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    if (isFirebase) ...[
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () => Navigator.of(
+                                context,
+                              ).pushNamed(SignUpScreen.routeName),
+                        child: const Text('Create a Firebase account'),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Demo: emilys / emilyspass',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -60,3 +60,25 @@ screens present the result. The authenticated `User.id` is passed to both the
 cart and detail screens, so `CartService.getByUserId` requests that user's
 single cart and `/carts/add` uses the same user ID. Logging out clears the
 saved session, returning the next launch to sign-in.
+
+## Lab Activity 5: Discussion
+
+The app now supports two sign-in workflows. The DummyJSON path sends a
+username and password to its demonstration REST endpoint and stores the
+returned profile locally. The Firebase path initializes Firebase at startup,
+uses `FirebaseAuth` to sign in or create an email/password account, and lets
+Firebase maintain the authenticated session. The sign-in UI makes the two
+paths explicit, while the sign-up UI collects the required profile details
+before creating a Firebase account.
+
+`UserService` is the single boundary for both authentication systems. It
+contains the Firebase operations for signing in, creating accounts, signing
+out, updating a username, changing a password after reauthentication, and
+deleting an account after reauthentication. It also preserves a local user
+profile so `ProfileScreen` can render details according to `LoginType`.
+
+Firebase provides managed account creation, secure password handling,
+automatic token refresh, and an authentication state that persists across app
+launches. These replace the direct demonstration API credential flow for
+Firebase users, while keeping the DummyJSON option available for comparison
+and the earlier cart activity.

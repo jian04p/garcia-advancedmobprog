@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final user = await _userService.getSavedUser();
     if (!mounted) return;
 
-    // Enhancement 1: persisted authentication decides the first screen.
+    // Lab Activity 4 enhancement: persisted authentication decides the route.
     Navigator.of(context).pushReplacementNamed(
       user == null ? SignInScreen.routeName : '/home',
       arguments: user,
